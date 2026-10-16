@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BitePlan - Smart Meal Planning & Dining App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brandDark: '#0a192f',
+            brandNavy: '#0f172a',
+            brandRed: '#e53935',
+            brandRedHover: '#c62828',
+            brandAccent: '#38bdf8'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    .dish-card:hover { transform: translateY(-4px); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .map-bg {
+      background-color: #e5e3df;
+      background-image: 
+        radial-gradient(#a3a3a3 1px, transparent 1px),
+        linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
+      background-size: 20px 20px, 40px 40px, 40px 40px;
+    }
+  </style>
+</head>
+<body class="bg-brandDark text-slate-100 min-h-screen flex flex-col antialiased">
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-40 bg-brandNavy/95 backdrop-blur border-b border-slate-800 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('explore')">
+        <div class="w-10 h-10 rounded-full bg-brandRed flex items-center justify-center text-white font-black text-xl shadow-md">
+          <i class="fa-solid font-bold fa-utensils"></i>
+        </div>
+        <div>
+          <span class="text-2xl font-extrabold tracking-tight text-white">Bite<span class="text-brandRed">Plan</span></span>
+          <span class="hidden sm:inline-block text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full ml-2 border border-slate-700">AI Food Companion</span>
+        </div>
+      </div>
+
+      <nav class="hidden md:flex items-center space-x-1">
+        <button onclick="switchTab('explore')" id="nav-explore" class="nav-btn px-4 py-2 rounded-lg text-sm font-semibold transition text-brandRed bg-slate-800/80">
+          <i class="fa-solid fa-compass mr-1.5"></i> Explore all hundred dishes
+        </button>
+        <button onclick="switchTab('restaurants')" id="nav-restaurants" class="nav-btn px-4 py-2 rounded-lg text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-slate-800">
+          <i class="fa-solid fa-map-location-dot mr-1.5"></i> Find nearby eats
+        </button>
+        <button onclick="switchTab('bookmarks')" id="nav-bookmarks" class="nav-btn px-4 py-2 rounded-lg text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-slate-800 relative">
+          <i class="fa-solid fa-bookmark mr-1.5"></i> Saved (<span id="bookmark-count">0</span>)
+        </button>
+      </nav>
+
+      <div class="flex items-center space-x-3">
+        <button onclick="toggleCartModal()" class="relative p-2.5 bg-brandRed hover:bg-brandRedHover text-white rounded-xl shadow-lg transition flex items-center space-x-2">
+          <i class="fa-solid fa-shopping-bag text-lg"></i>
+          <span class="hidden sm:inline font-bold text-sm">Cart</span>
+          <span id="cart-badge" class="bg-white text-brandRed text-xs font-black px-2 py-0.5 rounded-full shadow">0</span>
+        </button>
+        <button onclick="toggleAiAssistant()" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-brandAccent rounded-xl border border-slate-700 transition relative" title="Toggle Chef Maya AI">
+          <i class="fa-solid fa-robot text-lg"></i>
+          <span class="absolute -top-1 -right-1 flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-sky-500"></span>
+          </span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero / Welcome Banner Section -->
+  <section class="bg-gradient-to-r from-brandNavy via-slate-900 to-brandDark border-b border-slate-800 relative overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 flex flex-col md:flex-row items-center justify-between gap-8">
+      
+      <!-- Left Content Column -->
+      <div class="w-full md:w-1/2 space-y-5 text-center md:text-left z-10">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 bg-brandRed/20 border border-brandRed/40 text-brandRed rounded-full text-xs font-bold tracking-wide uppercase">
+          <i class="fa-solid fa-fire text-brandRed"></i> 100+ Curated Dishes Available
+        </div>
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-white leading-tight">
+          Delicious Food, <br class="hidden sm:inline"/><span class="text-transparent bg-clip-text bg-gradient-to-r from-brandRed to-orange-400">Tailored For Your Craving</span>
+        </h1>
+        <p class="text-slate-300 text-sm sm:text-base leading-relaxed max-w-xl">
+          Welcome to BitePlan! Choose an option below to explore our 50 Veg & 50 Non-Veg items, view saved dishes, check your cart, or find nearby food spots.
+        </p>
+
+        <!-- 4 Quick Action Buttons -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <button onclick="switchTab('explore')" class="px-5 py-3 bg-brandRed hover:bg-brandRedHover text-white font-bold rounded-xl shadow-lg transition flex items-center justify-center space-x-2 text-sm">
+            <i class="fa-solid fa-utensils"></i>
+            <span>Explore all hundred dishes</span>
+          </button>
+          <button onclick="switchTab('restaurants')" class="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold rounded-xl transition flex items-center justify-center space-x-2 text-sm">
+            <i class="fa-solid fa-location-crosshairs text-brandRed"></i>
+            <span>Find nearby eats</span>
+          </button>
+          <button onclick="switchTab('bookmarks')" class="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold rounded-xl transition flex items-center justify-center space-x-2 text-sm">
+            <i class="fa-solid fa-bookmark text-amber-400"></i>
+            <span>Saved items</span>
+          </button>
+          <button onclick="toggleCartModal()" class="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold rounded-xl transition flex items-center justify-center space-x-2 text-sm">
+            <i class="fa-solid fa-shopping-bag text-emerald-400"></i>
+            <span>Cart</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Artwork Column -->
+      <div class="w-full md:w-1/2 flex justify-center items-center relative z-10">
+        <div class="relative w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80">
+          <div class="absolute inset-0 bg-gradient-to-tr from-brandRed to-orange-500 rounded-full blur-2xl opacity-30 animate-pulse"></div>
+          <div class="relative w-full h-full rounded-full border-4 border-brandRed/60 shadow-2xl bg-slate-900 p-2 overflow-hidden flex items-center justify-center">
+            <img src="chef.jpg" alt="Cute Chef Mascot" class="w-full h-full object-cover rounded-full" onerror="this.src='assets/chef.jpg'">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Body Content Area -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+
+    <!-- VIEW 1: EXPLORE 100 DISHES LANDING SUB-PAGE (WITH VEG & NON-VEG BUTTONS) -->
+    <section id="view-explore" class="space-y-6">
+      <div class="bg-slate-900/90 p-8 rounded-3xl border border-slate-800 text-center space-y-6 max-w-3xl mx-auto my-6 shadow-2xl">
+        <div class="w-16 h-16 bg-brandRed/20 border border-brandRed/40 text-brandRed rounded-2xl flex items-center justify-center text-2xl mx-auto">
+          <i class="fa-solid fa-utensils"></i>
+        </div>
+        <div class="space-y-2">
+          <h2 class="text-3xl font-extrabold text-white">Explore 100 Dishes</h2>
+          <p class="text-slate-400 text-sm">Choose between Veg and Non-Veg categories to search Google for new recipes, bookmark items, or add them to your cart.</p>
+        </div>
+
+        <!-- 2 Main Category Buttons: Veg & Non-Veg -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+          <button onclick="openCategoryPage('veg')" class="p-6 bg-slate-800 hover:bg-emerald-950/40 border-2 border-emerald-500/40 hover:border-emerald-500 rounded-2xl transition flex flex-col items-center justify-center space-y-3 group shadow-lg">
+            <div class="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl group-hover:scale-110 transition">
+              <span class="w-4 h-4 rounded-full bg-emerald-500"></span>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white">Veg</h3>
+              <p class="text-xs text-slate-400 mt-1">Explore 50 Veg dishes & Google Search</p>
+            </div>
+          </button>
+
+          <button onclick="openCategoryPage('nonveg')" class="p-6 bg-slate-800 hover:bg-rose-950/40 border-2 border-rose-500/40 hover:border-rose-500 rounded-2xl transition flex flex-col items-center justify-center space-y-3 group shadow-lg">
+            <div class="w-14 h-14 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-xl group-hover:scale-110 transition">
+              <span class="w-4 h-4 rounded-full bg-rose-500"></span>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white">Non-Veg</h3>
+              <p class="text-xs text-slate-400 mt-1">Explore 50 Non-Veg dishes & Google Search</p>
+            </div>
+          </button>
+        </div>
+
+        <div class="pt-2">
+          <button onclick="openCategoryPage('all')" class="text-xs text-slate-400 hover:text-white underline transition">
+            Or view combined catalog of all 100 dishes
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 1.1: CATALOGUE RESULTS SUB-PAGE -->
+    <section id="view-category-dishes" class="hidden space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/80 p-5 rounded-2xl border border-slate-800">
+        <div class="flex items-center space-x-3">
+          <button onclick="switchTab('explore')" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-arrow-left"></i> Back to Categories
+          </button>
+          <div>
+            <h2 id="category-page-title" class="text-2xl font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-utensils text-brandRed"></i> Menu Catalog
+            </h2>
+            <p id="category-page-desc" class="text-slate-400 text-xs sm:text-sm mt-1">Bookmark items or add to cart</p>
+          </div>
+        </div>
+
+        <!-- Google Search Connect Button -->
+        <div>
+          <button id="google-search-action-btn" onclick="openGoogleSearch()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition text-xs flex items-center gap-2 shadow-lg">
+            <i class="fa-brands fa-google text-sm"></i> <span id="google-btn-text">Search Different Veg Dishes on Google</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search & Sort Bar -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="sm:col-span-2 relative">
+          <i class="fa-solid fa-search absolute left-3.5 top-3.5 text-slate-400"></i>
+          <input type="text" id="dish-search-input" onkeyup="filterDishes()" placeholder="Search dishes..." class="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-brandRed">
+        </div>
+        <div>
+          <select id="dish-sort-select" onchange="filterDishes()" class="w-full py-2.5 px-3 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-brandRed">
+            <option value="default">Sort By: Featured</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="rating">Highest Rated</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Dishes Grid Container -->
+      <div id="dishes-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <!-- Rendered via JavaScript -->
+      </div>
+    </section>
+
+    <!-- VIEW 2: FIND NEARBY EATS SECTION -->
+    <section id="view-restaurants" class="hidden space-y-6">
+      <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-map-location-dot text-brandRed"></i> Find Nearby Eats
+            </h2>
+            <p class="text-slate-400 text-sm mt-1">Enter your location to discover top-rated food places near you</p>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 flex flex-col sm:flex-row items-center gap-3">
+          <div class="relative w-full">
+            <i class="fa-solid fa-location-dot absolute left-3.5 top-3.5 text-brandRed"></i>
+            <input type="text" id="user-location-input" placeholder="Enter location (e.g., Mylavaram, Vijayawada, Hyderabad)" class="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-brandRed">
+          </div>
+          <button onclick="searchLocationRestaurants()" class="w-full sm:w-auto px-5 py-2.5 bg-brandRed hover:bg-brandRedHover text-white font-bold rounded-xl transition whitespace-nowrap flex items-center justify-center gap-2">
+            <i class="fa-solid fa-magnifying-glass"></i> Find Restaurants
+          </button>
+          <button onclick="useCurrentLocation()" class="w-full sm:w-auto px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold rounded-xl transition whitespace-nowrap flex items-center justify-center gap-2">
+            <i class="fa-solid fa-crosshairs text-sky-400"></i> My Location
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex flex-col h-[480px]">
+          <div class="bg-slate-800 px-4 py-3 flex items-center justify-between border-b border-slate-700">
+            <div class="flex items-center space-x-2 text-xs font-bold text-slate-300">
+              <i class="fa-solid fa-map text-emerald-400"></i>
+              <span id="map-header-location">Map View: Mylavaram, Andhra Pradesh</span>
+            </div>
+            <span class="text-xs bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded border border-emerald-800">Live GPS Radar</span>
+          </div>
+
+          <div class="relative flex-1 map-bg flex items-center justify-center overflow-hidden" id="map-container">
+            <div id="map-pins-layer" class="absolute inset-0 w-full h-full p-6"></div>
+            <div id="route-info-box" class="absolute bottom-4 left-4 right-4 bg-slate-900/95 backdrop-blur border border-slate-700 p-3 rounded-xl shadow-2xl flex items-center justify-between hidden">
+              <div>
+                <div id="route-title" class="font-bold text-xs text-white">Route to Restaurant</div>
+                <div id="route-details" class="text-xs text-slate-300">Est. 8 mins • 1.2 km via Main Rd</div>
+              </div>
+              <button onclick="closeRouteInfo()" class="text-slate-400 hover:text-white text-xs px-2 py-1 bg-slate-800 rounded">Close</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col h-[480px]">
+          <h3 class="font-bold text-white text-base mb-3 flex items-center justify-between">
+            <span>Nearby Options</span>
+            <span id="restaurant-count" class="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded-full">5 Found</span>
+          </h3>
+          <div id="restaurant-list" class="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: SAVED ITEMS / BOOKMARKS SECTION -->
+    <section id="view-bookmarks" class="hidden space-y-6">
+      <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-bookmark text-brandRed"></i> Saved Items
+          </h2>
+          <p class="text-slate-400 text-sm mt-1">Your bookmarked dishes for quick order & reference</p>
+        </div>
+        <button onclick="clearBookmarks()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg border border-slate-700">
+          Clear All
+        </button>
+      </div>
+
+      <div id="bookmarks-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+    </section>
+
+  </main>
+
+  <!-- Floating Chef Maya AI Assistant Sidebar Window -->
+  <div id="ai-assistant-panel" class="fixed bottom-4 right-4 z-50 w-80 sm:w-96 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl flex flex-col h-[480px] hidden">
+    <div class="p-3 bg-slate-800 border-b border-slate-700 rounded-t-2xl flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 rounded-full bg-brandRed flex items-center justify-center text-white font-bold text-xs">
+          <i class="fa-solid fa-robot"></i>
+        </div>
+        <div>
+          <h4 class="font-bold text-xs text-white">Chef Maya AI Assistant</h4>
+          <span class="text-[10px] text-emerald-400">Online • Recipe & Calorie Guide</span>
+        </div>
+      </div>
+      <button onclick="toggleAiAssistant()" class="text-slate-400 hover:text-white p-1">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div id="ai-chat-log" class="flex-1 p-3 overflow-y-auto custom-scrollbar space-y-3 text-xs">
+      <div class="bg-slate-800 p-2.5 rounded-xl text-slate-200 border border-slate-700">
+        👋 Hi! I'm Chef Maya. Ask me for recommendations, recipe ideas, or dietary advice for any of our 100 dishes!
+      </div>
+    </div>
+
+    <div class="p-2 bg-slate-800 border-t border-slate-700 rounded-b-2xl flex items-center space-x-2">
+      <input type="text" id="ai-chat-input" onkeydown="handleAiInput(event)" placeholder="Ask Maya e.g., 'Suggest healthy veg dishes'..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brandRed">
+      <button onclick="sendAiMessage()" class="bg-brandRed hover:bg-brandRedHover text-white px-3 py-2 rounded-lg text-xs font-bold">
+        <i class="fa-solid fa-paper-plane"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Cart Modal Drawer -->
+  <div id="cart-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end hidden">
+    <div class="w-full max-w-md bg-slate-900 h-full shadow-2xl flex flex-col border-l border-slate-800">
+      <div class="p-4 bg-slate-800 border-b border-slate-700 flex items-center justify-between">
+        <h3 class="font-bold text-lg text-white flex items-center gap-2">
+          <i class="fa-solid fa-cart-shopping text-brandRed"></i> Your Shopping Cart
+        </h3>
+        <button onclick="toggleCartModal()" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div id="cart-items-container" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar"></div>
+
+      <div class="p-4 bg-slate-800/90 border-t border-slate-700 space-y-3">
+        <div class="space-y-1 text-xs text-slate-300">
+          <div class="flex justify-between">
+            <span>Subtotal</span>
+            <span id="cart-subtotal">₹0</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Delivery Fee</span>
+            <span id="cart-delivery">₹40</span>
+          </div>
+          <div class="flex justify-between font-bold text-sm text-white pt-2 border-t border-slate-700">
+            <span>Total Payable</span>
+            <span id="cart-total" class="text-emerald-400">₹0</span>
+          </div>
+        </div>
+
+        <button onclick="checkoutOrder()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-sm">
+          <i class="fa-solid fa-check-circle"></i> Proceed to Checkout
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Alert Toast Banner -->
+  <div id="toast-notification" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-800 border border-brandRed text-white px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition transform translate-y-20 opacity-0 pointer-events-none">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toast-message" class="text-xs font-semibold">Item added to cart!</span>
+  </div>
+
+  <script>
+    // Database containing 50 Veg and 50
